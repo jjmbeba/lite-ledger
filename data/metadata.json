@@ -1,0 +1,10 @@
+{
+  "transactions": {
+    "Name": "transactions",
+    "Columns": [
+      "id int",
+      "merchant text",
+      "amount int"
+    ]
+  }
+}

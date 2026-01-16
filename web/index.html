@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiteLedger Dashboard</title>
+    <style>
+        :root {
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo span { color: var(--text-primary); }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Forms & Inputs */
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background: #f9fafb;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        button.secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* Layout Columns */
+        .actions-column { display: flex; flex-direction: column; }
+        .results-column { display: flex; flex-direction: column; }
+
+        /* Search Bar */
+        .search-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-group input { margin-bottom: 0; }
+        .search-group button { width: auto; padding: 0 1.5rem; }
+
+        /* Results Area */
+        #results-container {
+            min-height: 300px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: #f9fafb;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        /* Status Toast */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-left: 4px solid var(--accent);
+            transform: translateY(150%);
+            transition: transform 0.3s ease-out;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        #toast.show { transform: translateY(0); }
+        #toast.success { border-color: var(--success); }
+        #toast.error { border-color: var(--error); }
+
+        #demo-btn {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: auto;
+            background: #111827;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        #demo-btn:hover { background: #000; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">LiteLedger <span>Merchant</span></div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">v1.0.0</div>
+    </header>
+
+    <main>
+        <div class="actions-column">
+            <!-- System Status Card -->
+            <div class="card">
+                <h2>System Control</h2>
+                <p>Initialize the database schema before recording transactions.</p>
+                <button id="init-btn" class="secondary">Initialize System</button>
+            </div>
+
+            <!-- New Transaction Card -->
+            <div class="card">
+                <h2>New Transaction</h2>
+                <form id="transaction-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label>Transaction ID</label>
+                        <input type="number" id="tx-id" placeholder="e.g. 1001" required>
+                    </div>
+                    <div>
+                        <label>Merchant Name</label>
+                        <input type="text" id="tx-merchant" placeholder="e.g. Starbucks" required>
+                    </div>
+                    <div>
+                        <label>Amount (KES)</label>
+                        <input type="number" id="tx-amount" placeholder="e.g. 550" required>
+                    </div>
+                    <button type="submit">Record Transaction</button>
+                </form>
+            </div>
+
+            <!-- Update Transaction Card (Hidden by default) -->
+            <div class="card" id="update-card" style="display: none; border-color: var(--accent);">
+                <h2 style="color: var(--accent);">Update Transaction</h2>
+                <p style="margin-bottom: 1rem;">Modify details for the selected transaction.</p>
+                <form id="update-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <input type="hidden" id="update-id-hidden">
+                    <div>
+                        <label>Transaction ID</label>
+                        <input type="text" id="update-id-display" disabled style="background: #e5e7eb; color: var(--text-secondary);">
+                    </div>
+                    <div>
+                        <label>Merchant Name</label>
+                        <input type="text" id="update-merchant" required>
+                    </div>
+                    <div>
+                        <label>Amount (KES)</label>
+                        <input type="number" id="update-amount" required>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit">Save Changes</button>
+                        <button type="button" class="secondary" id="cancel-update-btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="results-column">
+            <!-- Audit Card -->
+            <div class="card">
+                <h2>Audit Ledger</h2>
+                <div class="search-group">
+                    <input type="number" id="audit-id" placeholder="ID..." style="flex: 1;">
+                    <input type="text" id="audit-merchant" placeholder="Merchant Name..." style="flex: 2;">
+                    <button id="audit-btn" style="flex: 0 0 auto;">Search</button>
+                    <button id="view-all-btn" class="secondary" style="flex: 0 0 auto;">View All</button>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card" id="results-container" style="padding: 0; overflow: hidden; display: block;">
+                <h2 style="margin: 1.5rem 1.5rem 0 1.5rem;">Ledger Results</h2>
+                <div id="results-content">
+                    <div class="empty-state">No transaction data loaded.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <button id="demo-btn">▶ Run Demo</button>
+
+    <!-- Toast Notification -->
+    <div id="toast">Ready</div>
+
+    <script>
+        // UI Helpers
+        const toastEl = document.getElementById('toast');
+        const resultsContent = document.getElementById('results-content');
+
+        function showToast(message, type = 'info') {
+            toastEl.textContent = message;
+            toastEl.className = type; // success, error
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 3000);
+        }
+
+        function displayTable(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                resultsContent.innerHTML = '<div class="empty-state">No records found.</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>ID</th><th>Active</th><th>Merchant</th><th>Amount</th><th>Checksum</th><th>Actions</th></tr></thead><tbody>';
+            
+            data.forEach(cols => {
+                const id = cols[0];
+                const merchant = cols[2] || '';
+                const amount = cols[3] || '';
+                
+                // Safe values for onclick
+                const safeMerchant = merchant.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                html += '<tr>';
+                cols.forEach(col => html += `<td>${col}</td>`);
+                
+                html += `
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" 
+                                onclick="editTx('${id}', '${safeMerchant}', '${amount}')">Edit</button>
+                            <button style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: var(--error); width: auto;" 
+                                onclick="deleteTx('${id}')">Delete</button>
+                        </div>
+                    </td>
+                `;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            
+            resultsContent.innerHTML = html;
+        }
+
+        // Actions
+        function deleteTx(id) {
+            if(!confirm('Are you sure you want to delete Transaction ' + id + '?')) return;
+            
+            executeSQL(`DELETE FROM transactions WHERE id = ${id}`)
+                .then(res => {
+                    if(res && res.success) {
+                        refreshTable();
+                    }
+                });
+        }
+
+        function editTx(id, merchant, amount) {
+            // Show update card
+            document.getElementById('update-card').style.display = 'flex';
+            document.getElementById('update-id-hidden').value = id;
+            document.getElementById('update-id-display').value = id;
+            document.getElementById('update-merchant').value = merchant;
+            document.getElementById('update-amount').value = amount;
+            
+            // Scroll to it
+            document.getElementById('update-card').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function refreshTable() {
+             executeSQL('SELECT * FROM transactions', false);
+        }
+
+        // Update Form Listener
+        document.getElementById('update-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('update-id-hidden').value;
+            const merchant = document.getElementById('update-merchant').value;
+            const amount = document.getElementById('update-amount').value;
+            
+            executeSQL(`UPDATE transactions SET merchant=${merchant}, amount=${amount} WHERE id=${id}`)
+                .then(res => {
+                    if(res && res.success) {
+                        document.getElementById('update-card').style.display = 'none';
+                        document.getElementById('update-form').reset();
+                        refreshTable();
+                    }
+                });
+        });
+
+        document.getElementById('cancel-update-btn').addEventListener('click', () => {
+             document.getElementById('update-card').style.display = 'none';
+             document.getElementById('update-form').reset();
+        });
+
+        // API Handler
+        async function executeSQL(query, showSuccess = true) {
+            try {
+                const response = await fetch('/sql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (showSuccess) showToast('Operation successful', 'success');
+                    if (result.data) {
+                        if (Array.isArray(result.data)) {
+                             // Handle empty array or array of arrays (rows)
+                             if (result.data.length === 0 || Array.isArray(result.data[0])) {
+                                 displayTable(result.data);
+                             } else {
+                                 console.log('Non-table array data:', result.data);
+                             }
+                        } else {
+                            // String response
+                            console.log(result.data);
+                        }
+                    }
+                    return result;
+                } else {
+                    showToast(result.error, 'error');
+                    return null;
+                }
+            } catch (e) {
+                showToast(`Network Error: ${e.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('init-btn').addEventListener('click', () => {
+            executeSQL('CREATE TABLE transactions (id int, merchant text, amount int)');
+        });
+
+        document.getElementById('transaction-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('tx-id').value;
+            const merchant = document.getElementById('tx-merchant').value;
+            const amount = document.getElementById('tx-amount').value;
+            
+            executeSQL(`INSERT INTO transactions VALUES (${id}, ${merchant}, ${amount})`)
+                .then(res => {
+                    if(res && res.success) {
+                        document.getElementById('transaction-form').reset();
+                        // Clear results area to avoid confusion or auto-refresh if we implemented list all
+                    }
+                });
+        });
+
+        document.getElementById('audit-btn').addEventListener('click', () => {
+            const id = document.getElementById('audit-id').value.trim();
+            const merchant = document.getElementById('audit-merchant').value.trim();
+            
+            if (id) {
+                executeSQL(`SELECT * FROM transactions WHERE id = ${id}`);
+            } else if (merchant) {
+                executeSQL(`SELECT * FROM transactions WHERE merchant = ${merchant}`);
+            } else {
+                showToast('Please enter an ID or Merchant to search', 'error');
+            }
+        });
+
+        document.getElementById('view-all-btn').addEventListener('click', () => {
+            executeSQL('SELECT * FROM transactions');
+        });
+
+        // Auto-load on startup
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshTable();
+        });
+
+        // Demo Mode Script
+        document.getElementById('demo-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('demo-btn');
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            
+            showToast('Initializing Demo...', 'info');
+            
+            await executeSQL('CREATE TABLE transactions (id int, merchant text, amount int)', false);
+            await new Promise(r => setTimeout(r, 600));
+            
+            await executeSQL('INSERT INTO transactions VALUES (201, Starbucks, 550)', false);
+            showToast('Added: Starbucks (201)', 'success');
+            await new Promise(r => setTimeout(r, 600));
+            
+            await executeSQL('INSERT INTO transactions VALUES (202, Uber, 1200)', false);
+            showToast('Added: Uber (202)', 'success');
+            await new Promise(r => setTimeout(r, 600));
+            
+            await executeSQL('INSERT INTO transactions VALUES (203, Netflix, 999)', false);
+            showToast('Added: Netflix (203)', 'success');
+            await new Promise(r => setTimeout(r, 800));
+            
+            // Auto fill search
+            document.getElementById('audit-id').value = '';
+            await executeSQL('SELECT * FROM transactions');
+            
+            btn.disabled = false;
+            btn.textContent = '▶ Run Demo';
+        });
+    </script>
+</body>
+</html>
